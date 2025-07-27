@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace InventoryApp.Services
 {
-    internal class FileService : IFileService
+    internal class FileService<T> : IFileService<T> 
     {
         private readonly string FilePath;
         private readonly Microsoft.Extensions.Logging.ILogger Logger;
@@ -23,16 +23,16 @@ namespace InventoryApp.Services
             {
                 config.AddSerilog();
             });
-            Logger = loggerFactory.CreateLogger<FileService>();
+            Logger = loggerFactory.CreateLogger<FileService<T>>();
         }
 
-        public void WriteToFile(IList<Product> products)
+        public void WriteToFile(T value)
         {
             try
             {
-                Logger.LogInformation($"Writing {products.Count} products to file at {FilePath}");
+                Logger.LogInformation($"Writing value {value} products to file at {FilePath}");
 
-                var json = JsonSerializer.Serialize(products, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true });
                 using FileStream fileStream = new FileStream(FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
                 using StreamWriter writer = new StreamWriter(fileStream);
 
@@ -49,7 +49,7 @@ namespace InventoryApp.Services
             }
         }
 
-        public IList<Product> ReadFromFile()
+        public T ReadFromFile()
         {
             try
             {
@@ -64,17 +64,17 @@ namespace InventoryApp.Services
                 if (string.IsNullOrWhiteSpace(content))
                 {
                     Logger.LogWarning("File is empty. Returning empty product list.");
-                    return new List<Product>();
+                    return Activator.CreateInstance<T>() ?? throw new InvalidOperationException("Failed to create default instance of type.");
                 }
 
-                var products = JsonSerializer.Deserialize<IList<Product>>(content);
-                if (products is null)
+                var value = JsonSerializer.Deserialize<T>(content);
+                if (value is null)
                 {
                     throw new InvalidDataException("Failed to deserialize products list from file: content is not in valid format.");
                 }
 
-                Logger.LogInformation($"Successfully read {products.Count} products from file.");
-                return products;
+                Logger.LogInformation($"Successfully read value from file.");
+                return value;
             }
             catch (JsonException ex)
             {

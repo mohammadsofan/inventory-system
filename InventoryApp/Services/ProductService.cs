@@ -9,12 +9,12 @@ namespace InventoryApp.Services
 {
     internal class ProductService : IProductService
     {
-        private readonly IFileService fileService;
+        private readonly IFileService<List<Product>> fileService;
         private readonly ProductValidator validator;
         private readonly Microsoft.Extensions.Logging.ILogger Logger;
         public ProductService(string path)
         {
-            fileService = new FileService(path);
+            fileService = new FileService<List<Product>>(path);
             validator = new ProductValidator();
 
             var loggerFactory = LoggerFactory.Create(config =>

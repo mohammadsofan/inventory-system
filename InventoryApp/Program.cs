@@ -1,5 +1,4 @@
-﻿using InventoryApp.Dtos;
-using InventoryApp.Enums;
+﻿using InventoryApp.Enums;
 using InventoryApp.Interfaces;
 using InventoryApp.Models;
 using InventoryApp.Services;

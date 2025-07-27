@@ -3,9 +3,9 @@
 
 namespace InventoryApp.Interfaces
 {
-    internal interface IFileService
+    internal interface IFileService<T>
     {
-        void WriteToFile(IList<Product> products);
-        IList<Product> ReadFromFile();
+        void WriteToFile(T value);
+        T ReadFromFile();
     }
 }
