@@ -16,25 +16,22 @@ namespace InventoryApp.Validators
 
         public ProductValidatorResult Validate(Product product)
         {
-            bool isValid = true;
             IList<Error> errors = new List<Error>();
-            if(product.Name.Length < 3)
+            if(product.Name.Length < 3 || product.Name.Length > 20)
             {
                 errors.Add(new Error()
                 {
                     Field = nameof(product.Name),
-                    Message = "Name length must be 3 or more characters."
+                    Message = "Name length must be between 3 and 20 characters."
                 });
-                isValid = false;
             }
-            if(product.Description.Length < 3)
+            if(product.Description.Length < 3 || product.Name.Length > 50)
             {
                 errors.Add(new Error()
                 {
                     Field = nameof(product.Description),
-                    Message = "Description length must be 3 or more characters."
+                    Message = "Description length must be between 3 and 50 characters."
                 });
-                isValid = false;
             }
             if (product.Discount < 0 || product.Discount > 1)
             {
@@ -43,11 +40,26 @@ namespace InventoryApp.Validators
                     Field = nameof(product.Discount),
                     Message = "Discount must be between 0.00 and 1.00."
                 });
-                isValid = false;
+            }
+            if(product.Price < 0)
+            {
+                errors.Add(new Error()
+                {
+                    Field = nameof(product.Price),
+                    Message = "Price cannot be negative value"
+                });
+            }
+            if (product.Quantity < 0)
+            {
+                errors.Add(new Error()
+                {
+                    Field = nameof(product.Quantity),
+                    Message = "Quantity cannot be negative value"
+                });
             }
             return new ProductValidatorResult()
             {
-                IsValid = isValid,
+                IsValid = !errors.Any(),
                 Errors = errors
             };
         }

@@ -1,4 +1,5 @@
 ﻿using InventoryApp.Dtos;
+using InventoryApp.Enums;
 using InventoryApp.Interfaces;
 using InventoryApp.Models;
 using InventoryApp.Services;
@@ -140,9 +141,10 @@ namespace InventoryApp
                 Console.WriteLine("Invalid option, please enter a valid option.");
                 isNumericinput = int.TryParse(Console.ReadLine(), out option);
             }
-            switch(option)
+            ConsoleMenuOperation operation = (ConsoleMenuOperation)option;
+            switch(operation)
             {
-                case 1:
+                case ConsoleMenuOperation.Create:
                 {
                     var product = ReadProductInfo(productService.GetNextProductId());
                     var result = productService.CreateProduct(product);
@@ -159,7 +161,7 @@ namespace InventoryApp
                     goto displayOptionsList;
                            
                 }
-                case 2:
+                case ConsoleMenuOperation.GetAllProducts:
                 {
                     var result = productService.GetAllProducts(null);
                     Logger.LogInformation($"Getting all products");
@@ -175,7 +177,7 @@ namespace InventoryApp
                     }
                     goto displayOptionsList;
                 }
-                case 3:
+                case ConsoleMenuOperation.GetOneProductById:
                 {
                     long id = GetProductId();
                     Logger.LogInformation($"Getting product with ID = {id}");
@@ -192,7 +194,7 @@ namespace InventoryApp
                     }
                         goto displayOptionsList;
                 }
-                case 4:
+                case ConsoleMenuOperation.UpdateProduct:
                 {
                     long id = GetProductId();
                     var product = productService.GetProductByFilter(p => p.Id == id).Product;
@@ -218,7 +220,7 @@ namespace InventoryApp
                     }
                     goto displayOptionsList;
                 }
-                case 5:
+                case ConsoleMenuOperation.DeleteProduct:
                 {
                     long id = GetProductId();
                     var result = productService.DeleteProduct(id);
@@ -226,7 +228,7 @@ namespace InventoryApp
                     Logger.LogInformation($"deleting product with ID = {id} , Result = {result.Message}");
                     goto displayOptionsList;
                 }
-                case 6:
+                case ConsoleMenuOperation.Exit:
                 {
                     Logger.LogInformation("Application Closed");
                     return;
