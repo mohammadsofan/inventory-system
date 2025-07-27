@@ -1,10 +1,31 @@
-﻿using InventoryApp.Models;
+﻿using InventoryApp.Dtos;
+using InventoryApp.Interfaces;
+using InventoryApp.Models;
 using InventoryApp.Services;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace InventoryApp
 {
     internal class Program
     {
+        public static Microsoft.Extensions.Logging.ILogger Logger;
+        static Program()
+        {
+            var sessionId = Guid.NewGuid().ToString();
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.WithProperty("SessionId",sessionId)
+                .MinimumLevel.Information()
+                .WriteTo.File("Logs/log.txt",
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} | SessionId={SessionId}{NewLine}{Exception}")
+                .CreateLogger();
+            var loggerFactory = LoggerFactory.Create(config =>
+            {
+                config.AddSerilog();
+            });
+            Logger = loggerFactory.CreateLogger<Program>();
+        }
         public static void DisplayOptionsList()
         {
             Console.WriteLine("""
@@ -22,8 +43,9 @@ namespace InventoryApp
                     ============================================================
                     """);
         }
-        public static Product ReadProductInfo()
+        public static Product ReadProductInfo(long id)
         {
+            
             Product product = new Product();
             Console.Write("Product Name : ");
             product.Name = Console.ReadLine()!;
@@ -66,7 +88,8 @@ namespace InventoryApp
                 isValidValue = int.TryParse(Console.ReadLine(), out quantity);
             }
             product.Quantity = quantity;
-            product.Id=Guid.NewGuid();
+            
+            product.Id = id;
             product.CreatedAt = DateTime.Now;
             return product;
         }
@@ -90,21 +113,25 @@ namespace InventoryApp
             }
             Console.WriteLine($"Total Products : {products.Count}");
         }
-        public static Guid GetProductId()
+        public static long GetProductId()
         {
             Console.Write("Enter product ID :");
-            var IsValidId = Guid.TryParse(Console.ReadLine(), out var id);
+            var IsValidId = long.TryParse(Console.ReadLine(), out var id);
             while(!IsValidId)
             {
-                Console.Write("Invalid Guid Format, please enter a valid id with Guid format :");
-                IsValidId = Guid.TryParse(Console.ReadLine(),out id);
+                Console.Write("Invalid ID Format, please enter a Numeric ID:");
+                IsValidId = long.TryParse(Console.ReadLine(),out id);
             }
             return id;
         }
         static void Main(string[] args)
         {
+
+
+            Logger.LogInformation("Application started");
+
             var path = Path.Combine(AppContext.BaseDirectory, "Data", "products.json");
-            ProductService productService = new ProductService(path);
+            IProductService productService = new ProductService(path);
             displayOptionsList:
             DisplayOptionsList();
             var isNumericinput = int.TryParse(Console.ReadLine(),out var option);
@@ -117,12 +144,15 @@ namespace InventoryApp
             {
                 case 1:
                 {
-                    var result = productService.Create(ReadProductInfo());
+                    var product = ReadProductInfo(productService.GetNextId());
+                    var result = productService.Create(product);
+                    Logger.LogInformation($"Creating new product ID = {product.Id}, Name = {product.Name},..., result = {result.Message}");
                     Console.WriteLine(result.Message);
                     if (result.ValidationResult != null && result.ValidationResult.IsValid == false)
                     {
                         foreach(var error in result.ValidationResult.Errors)
                             {
+                                Logger.LogInformation($"Creating new product failed, Error: FieldName[{error.Field}], {error.Message}");
                                 Console.WriteLine($"Error: FieldName[{error.Field}], {error.Message} ");
                             }
                     }
@@ -132,46 +162,56 @@ namespace InventoryApp
                 case 2:
                 {
                     var result = productService.GetProducts(null);
+                    Logger.LogInformation($"Getting all products");
                     if (result.Products == null)
                     {
+                        Logger.LogInformation($"Getting all products, result = {result.Message}");
                         Console.WriteLine(result.Message);
                     }
                     else
                     {
+                        Logger.LogInformation($"Getting all products, result = printed");
                         PrintProducts(result.Products);
                     }
                     goto displayOptionsList;
                 }
                 case 3:
                 {
-                    Guid id = GetProductId();
+                    long id = GetProductId();
+                    Logger.LogInformation($"Getting product with ID = {id}");
                     var result = productService.GetProduct(p => p.Id == id);
                     if(result.Product is null)
                     {
                         Console.WriteLine(result.Message);
+                        Logger.LogInformation($"Getting product with ID = {id}, result = {result.Message}");
                     }
                     else
                     {
                         PrintProduct(result.Product);
+                        Logger.LogInformation($"Getting product with ID = {id}, result = printed");
                     }
-                    goto displayOptionsList;
+                        goto displayOptionsList;
                 }
                 case 4:
                 {
-                    Guid id = GetProductId();
+                    long id = GetProductId();
                     var product = productService.GetProduct(p => p.Id == id).Product;
+                    Logger.LogInformation($"Trying to update product with ID = {id}");
                     if (product is null)
                     {
+                        Logger.LogWarning($"Update failed, product with ID = {id} not found");
                         Console.WriteLine($"Product with ID {id} not found.");
                     }
                     else
                     {
-                        var result = productService.Update(id, ReadProductInfo());
+                        var result = productService.Update(id, ReadProductInfo(id));
                         Console.WriteLine(result.Message);
+                        Logger.LogInformation($"Update result, product with ID = {id}, Result = {result.Message}");
                         if (result.ValidationResult != null && result.ValidationResult.IsValid == false)
                         {
                             foreach (var error in result.ValidationResult.Errors)
                             {
+                                Logger.LogWarning($"Update Error, product with ID = {id}, Error: FieldName[{error.Field}], {error.Message}");
                                 Console.WriteLine($"Error: FieldName[{error.Field}], {error.Message} ");
                             }
                         }
@@ -180,13 +220,15 @@ namespace InventoryApp
                 }
                 case 5:
                 {
-                    Guid id = GetProductId();
+                    long id = GetProductId();
                     var result = productService.Delete(id);
                     Console.WriteLine(result.Message);
+                    Logger.LogInformation($"deleting product with ID = {id} , Result = {result.Message}");
                     goto displayOptionsList;
                 }
                 case 6:
                 {
+                    Logger.LogInformation("Application Closed");
                     return;
                 }
             }
