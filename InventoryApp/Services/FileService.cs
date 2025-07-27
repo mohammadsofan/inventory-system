@@ -32,7 +32,7 @@ namespace InventoryApp.Services
             {
                 Logger.LogInformation($"Writing {products.Count} products to file at {FilePath}");
 
-                var json = JsonSerializer.Serialize(products);
+                var json = JsonSerializer.Serialize(products, new JsonSerializerOptions { WriteIndented = true });
                 using FileStream fileStream = new FileStream(FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
                 using StreamWriter writer = new StreamWriter(fileStream);
 

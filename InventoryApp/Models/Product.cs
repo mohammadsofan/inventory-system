@@ -14,7 +14,7 @@ namespace InventoryApp.Models
         public string Description { get; set; } =string.Empty;
         public double Price { get; set; }
         public double Discount { get; set; }
-        public double FinalPrice => Price - Price * Discount; 
+        public double FinalPrice => Math.Round(Price - Price * Discount,2); 
         public int Quantity { get; set; }
         public DateTime CreatedAt { get; set; }
 

@@ -163,7 +163,7 @@ namespace InventoryApp
                 {
                     var result = productService.GetAllProducts(null);
                     Logger.LogInformation($"Getting all products");
-                    if (result.Products == null)
+                    if (result.Products.Count == 0 && result.Message.Length !=0)
                     {
                         Logger.LogInformation($"Getting all products, result = {result.Message}");
                         Console.WriteLine(result.Message);

@@ -132,20 +132,7 @@ namespace InventoryApp.Services
                 Logger.LogInformation("Retrieving product by filter }");
 
                 var products = GetAllProducts(filter).Products;
-                Product? product = null;
-                if (products is not null)
-                {
-                    product = products.FirstOrDefault();
-                }
-                else
-                {
-                    Logger.LogInformation("Retrieving product by filter failed }");
-
-                    return new GetProductResultDto()
-                    {
-                        Message = "Failed to retrieve products from file."
-                    };
-                }
+                Product? product = products?.FirstOrDefault();
                 if (product is not null)
                 {
                     Logger.LogInformation($"Retrieving product by filter successed,product id = {product.Id}");
@@ -192,14 +179,13 @@ namespace InventoryApp.Services
                 return new GetProductsResultDto()
                 {
                     Products = products,
-                    Message = null
                 };
             }
             catch(Exception ex) when (ex is InvalidDataException)
             {
                 Logger.LogError(ex, "InvalidDataException occurred during Retrieving product list.");
                 return new GetProductsResultDto() { 
-                    Products = null,
+                    Products = new List<Product>(),
                     Message = "Something went wrong, could be Invalid file format.",
 
                 };
@@ -211,7 +197,7 @@ namespace InventoryApp.Services
 
                 return new GetProductsResultDto()
                 {
-                    Products = null,
+                    Products = new List<Product>(),
                     Message = "An unexpected error occurred."
                 };
             }
