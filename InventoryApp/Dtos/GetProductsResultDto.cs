@@ -2,7 +2,7 @@
 
 namespace InventoryApp.Dtos
 {
-    internal class GetProductsResult
+    internal class GetProductsResultDto
     {
         public IList<Product>? Products { get; set; }
         public string? Message { get; set; }
