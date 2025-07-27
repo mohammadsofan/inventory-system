@@ -10,8 +10,8 @@ namespace InventoryApp.Models
     internal class Product
     {
         public long Id { get; set; }
-        public string Name { get; set; } = null!;
-        public string Description { get; set; } = null!;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } =string.Empty;
         public double Price { get; set; }
         public double Discount { get; set; }
         public double FinalPrice => Price - Price * Discount; 

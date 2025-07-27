@@ -28,8 +28,8 @@ namespace InventoryApp.Services
             try
             {
                 Logger.LogInformation("Attempting to create a new product.");
-                var validatorResult = validator.Validate(product);
-                if (validatorResult.IsValid)
+                var validationResult = validator.Validate(product);
+                if (validationResult.IsValid)
                 {
                     var products = fileService.ReadFromFile();
                     products.Add(product);
@@ -43,12 +43,12 @@ namespace InventoryApp.Services
                 }
                 else
                 {
-                    Logger.LogWarning($"Validation failed while creating product. Errors: {string.Join(", ", validatorResult.Errors.Select(e => $"{e.Field}: {e.Message}"))}");
+                    Logger.LogWarning($"Validation failed while creating product. Errors: {string.Join(", ", validationResult.Errors.Select(e => $"{e.Field}: {e.Message}"))}");
                     return new ProductOperationResultDto()
                     {
                         Message = "Fail to create product due to validation errors.",
                         Success = false,
-                        ValidationResult = validatorResult
+                        ValidationResult = validationResult
                     };
 
                 }
@@ -223,8 +223,8 @@ namespace InventoryApp.Services
             {
                 Logger.LogInformation($"Attempting to update product with ID {id}.");
                 var products = fileService.ReadFromFile();
-                var oldProduct = products.FirstOrDefault(p => p.Id == id);
-                if(oldProduct is null) {
+                var existingProduct = products.FirstOrDefault(p => p.Id == id);
+                if(existingProduct is null) {
                     Logger.LogWarning($"Update failed: product with ID {id} not found.");
                     return new ProductOperationResultDto()
                     {
@@ -232,12 +232,12 @@ namespace InventoryApp.Services
                         Success = false,
                     };
                 }
-                var validatorResult = validator.Validate(product);
-                if (validatorResult.IsValid)
+                var validationResult = validator.Validate(product);
+                if (validationResult.IsValid)
                 {
-                    var index = products.IndexOf(oldProduct);
-                    product.Id = oldProduct.Id;
-                    product.CreatedAt = oldProduct.CreatedAt;
+                    var index = products.IndexOf(existingProduct);
+                    product.Id = existingProduct.Id;
+                    product.CreatedAt = existingProduct.CreatedAt;
                     products[index] = product;
                     fileService.WriteToFile(products);
                     Logger.LogInformation($"Product with ID {id} updated successfully.");
@@ -249,13 +249,13 @@ namespace InventoryApp.Services
                 }
                 else
                 {
-                    Logger.LogWarning($"Validation failed while updating product with ID {id}. Errors: {string.Join(", ", validatorResult.Errors.Select(e => $"{e.Field}: {e.Message}"))}");
+                    Logger.LogWarning($"Validation failed while updating product with ID {id}. Errors: {string.Join(", ", validationResult.Errors.Select(e => $"{e.Field}: {e.Message}"))}");
 
                     return new ProductOperationResultDto()
                     {
                         Message = "Product update failed due to validation errors.",
                         Success = false,
-                        ValidationResult = validatorResult
+                        ValidationResult = validationResult
                     };
                 }
             }
@@ -279,7 +279,7 @@ namespace InventoryApp.Services
                 };
             }
         }
-        public long GetNextId()
+        public long GetNextProductId()
         {
             try
             {

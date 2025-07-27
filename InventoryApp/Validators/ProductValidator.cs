@@ -4,12 +4,12 @@ namespace InventoryApp.Validators
     public class ProductValidatorResult
     {
         public bool IsValid { get; set; }
-        public IList<Error> Errors { get; set; } = null!;
+        public IList<Error> Errors { get; set; } = new List<Error>();
     }
     public class Error
     {
-        public string Field { get; set; } = null!;
-        public string Message { get; set; } = null!;
+        public string Field { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
     }
     internal class ProductValidator
     {

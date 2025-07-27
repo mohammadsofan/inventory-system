@@ -4,7 +4,7 @@ namespace InventoryApp.Dtos
 {
     internal class ProductOperationResultDto
     {
-        public string Message { get; set; } = null!;
+        public string Message { get; set; } = string.Empty;
         public ProductValidatorResult? ValidationResult { get; set; }
         public bool Success { get; set; }
     }

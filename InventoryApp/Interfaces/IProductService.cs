@@ -9,10 +9,10 @@ namespace InventoryApp.Interfaces
     {
         GetProductsResultDto GetAllProducts(Func<Product, bool>? filter);
         GetProductResultDto GetProductByFilter(Func<Product, bool> filter);
-        ProductOperationResultDto Create(Product product);
+        ProductOperationResultDto CreateProduct(Product product);
         DeleteResultDto DeleteProduct(long id);
         ProductOperationResultDto UpdateProduct(long id, Product product);
-        long GetNextId();
+        long GetNextProductId();
 
     }
 }

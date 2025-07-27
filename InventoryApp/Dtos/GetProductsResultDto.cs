@@ -5,6 +5,6 @@ namespace InventoryApp.Dtos
     internal class GetProductsResultDto
     {
         public IList<Product>? Products { get; set; }
-        public string? Message { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

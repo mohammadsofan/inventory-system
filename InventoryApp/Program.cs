@@ -144,8 +144,8 @@ namespace InventoryApp
             {
                 case 1:
                 {
-                    var product = ReadProductInfo(productService.GetNextId());
-                    var result = productService.Create(product);
+                    var product = ReadProductInfo(productService.GetNextProductId());
+                    var result = productService.CreateProduct(product);
                     Logger.LogInformation($"Creating new product ID = {product.Id}, Name = {product.Name},..., result = {result.Message}");
                     Console.WriteLine(result.Message);
                     if (result.ValidationResult != null && result.ValidationResult.IsValid == false)
@@ -161,7 +161,7 @@ namespace InventoryApp
                 }
                 case 2:
                 {
-                    var result = productService.GetProducts(null);
+                    var result = productService.GetAllProducts(null);
                     Logger.LogInformation($"Getting all products");
                     if (result.Products == null)
                     {
@@ -179,7 +179,7 @@ namespace InventoryApp
                 {
                     long id = GetProductId();
                     Logger.LogInformation($"Getting product with ID = {id}");
-                    var result = productService.GetProduct(p => p.Id == id);
+                    var result = productService.GetProductByFilter(p => p.Id == id);
                     if(result.Product is null)
                     {
                         Console.WriteLine(result.Message);
@@ -195,7 +195,7 @@ namespace InventoryApp
                 case 4:
                 {
                     long id = GetProductId();
-                    var product = productService.GetProduct(p => p.Id == id).Product;
+                    var product = productService.GetProductByFilter(p => p.Id == id).Product;
                     Logger.LogInformation($"Trying to update product with ID = {id}");
                     if (product is null)
                     {
@@ -204,7 +204,7 @@ namespace InventoryApp
                     }
                     else
                     {
-                        var result = productService.Update(id, ReadProductInfo(id));
+                        var result = productService.UpdateProduct(id, ReadProductInfo(id));
                         Console.WriteLine(result.Message);
                         Logger.LogInformation($"Update result, product with ID = {id}, Result = {result.Message}");
                         if (result.ValidationResult != null && result.ValidationResult.IsValid == false)
@@ -221,7 +221,7 @@ namespace InventoryApp
                 case 5:
                 {
                     long id = GetProductId();
-                    var result = productService.Delete(id);
+                    var result = productService.DeleteProduct(id);
                     Console.WriteLine(result.Message);
                     Logger.LogInformation($"deleting product with ID = {id} , Result = {result.Message}");
                     goto displayOptionsList;
