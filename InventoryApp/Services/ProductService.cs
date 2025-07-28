@@ -12,11 +12,12 @@ namespace InventoryApp.Services
         private readonly IFileService<List<Product>> fileService;
         private readonly ProductValidator validator;
         private readonly Microsoft.Extensions.Logging.ILogger Logger;
+        private readonly string FilePath;
         public ProductService(string path)
         {
-            fileService = new FileService<List<Product>>(path);
+            fileService = new FileService<List<Product>>();
+            FilePath = path;
             validator = new ProductValidator();
-
             var loggerFactory = LoggerFactory.Create(config =>
             {
                 config.AddSerilog();
@@ -31,9 +32,9 @@ namespace InventoryApp.Services
                 var validationResult = validator.Validate(product);
                 if (validationResult.IsValid)
                 {
-                    var products = fileService.ReadFromFile();
+                    var products = fileService.ReadFromFile(FilePath);
                     products.Add(product);
-                    fileService.WriteToFile(products);
+                    fileService.WriteToFile(products, FilePath);
                     Logger.LogInformation($"Product with ID {product.Id} created successfully.");
                     return new ProductOperationResultDto()
                     {
@@ -79,7 +80,7 @@ namespace InventoryApp.Services
             Logger.LogInformation($"Attempting to delete product with ID {id}.");
             try
             {
-                var products = fileService.ReadFromFile();
+                var products = fileService.ReadFromFile(FilePath);
                 var product = products.FirstOrDefault(p => p.Id == id);
                 if (product is null)
                 {
@@ -93,7 +94,7 @@ namespace InventoryApp.Services
                 else
                 {
                     products.Remove(product);
-                    fileService.WriteToFile(products);
+                    fileService.WriteToFile(products, FilePath);
                     Logger.LogInformation($"Product with ID {id} deleted successfully.");
                     return new DeleteResultDto()
                     {
@@ -170,7 +171,7 @@ namespace InventoryApp.Services
             Logger.LogInformation("Retrieving product list...");
             try
             {
-                var products = fileService.ReadFromFile();
+                var products = fileService.ReadFromFile(FilePath);
                 if(filter is not null)
                 {
                     products = products.Where(filter).ToList();
@@ -208,7 +209,7 @@ namespace InventoryApp.Services
             try
             {
                 Logger.LogInformation($"Attempting to update product with ID {id}.");
-                var products = fileService.ReadFromFile();
+                var products = fileService.ReadFromFile(FilePath);
                 var existingProduct = products.FirstOrDefault(p => p.Id == id);
                 if(existingProduct is null) {
                     Logger.LogWarning($"Update failed: product with ID {id} not found.");
@@ -225,7 +226,7 @@ namespace InventoryApp.Services
                     product.Id = existingProduct.Id;
                     product.CreatedAt = existingProduct.CreatedAt;
                     products[index] = product;
-                    fileService.WriteToFile(products);
+                    fileService.WriteToFile(products, FilePath);
                     Logger.LogInformation($"Product with ID {id} updated successfully.");
                     return new ProductOperationResultDto()
                     {
@@ -269,7 +270,7 @@ namespace InventoryApp.Services
         {
             try
             {
-                var products = fileService.ReadFromFile();
+                var products = fileService.ReadFromFile(FilePath);
                 if(products.Count == 0)
                 {
                     return 1;

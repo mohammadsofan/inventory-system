@@ -5,7 +5,7 @@ namespace InventoryApp.Interfaces
 {
     internal interface IFileService<T>
     {
-        void WriteToFile(T value);
-        T ReadFromFile();
+        void WriteToFile(T value,string filePath);
+        T ReadFromFile(string filePath);
     }
 }
