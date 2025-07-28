@@ -129,6 +129,11 @@ namespace InventoryApp
                 case ConsoleMenuOperation.DeleteProduct:
                 {
                     long id = consoleInputHelper.ReadProductId();
+                    var confirm = consoleInputHelper.ConfirmDeletion();
+                    if (confirm == false)
+                    {
+                        goto displayOptionsList;
+                    }
                     var result = productService.DeleteProduct(id);
                     Console.WriteLine(result.Message);
                     Logger.LogInformation($"deleting product with ID = {id} , Result = {result.Message}");

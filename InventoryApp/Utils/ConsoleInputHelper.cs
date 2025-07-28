@@ -1,4 +1,5 @@
 ﻿using InventoryApp.Models;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,6 +98,18 @@ namespace InventoryApp.Utils
                 IsValidId = long.TryParse(Console.ReadLine(), out id);
             }
             return id;
+        }
+        public bool ConfirmDeletion()
+        {
+            Console.WriteLine("Are you sure you want to delete this product? (y/n)");
+            var option = Console.ReadLine();
+            while(!(option == "y" || option == "Y" || option =="n" || option == "N"))
+            {
+                Console.WriteLine("please answer with (y/n)");
+                option = Console.ReadLine();
+            }
+            return option == "y" || option == "Y" ? true : false;
+
         }
     }
 }
