@@ -1,6 +1,6 @@
 # Inventory System
 
-This project is a C# console application that implements an inventory management system with basic CRUD operations (Create, Read, Update, Delete) for managing products. It uses the file system to store product data in JSON format.
+The Inventory System is a lightweight C# console application designed to manage product inventories through a user-friendly command-line interface. It allows users to create, read, update, and delete product records and persist them using JSON file-based storage. The project is modular, following clean architecture principles with separation of concerns across models, services, interfaces, and validation layers. This makes the system easy to maintain, extend, and test.
 
 ## Features
 - Add new products
@@ -21,7 +21,8 @@ This project is a C# console application that implements an inventory management
 - `Interfaces/` – Abstractions for services
 - `Validators/` – Input validation logic
 - `Dtos/` – Result classes for responses
-
+- `Utils/` - Helper classes
+- `Enums/` - Enums
 ## Getting Started
 1. Clone the repo
 2. Open in Visual Studio / VS Code
