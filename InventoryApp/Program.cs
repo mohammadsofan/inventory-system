@@ -2,6 +2,7 @@
 using InventoryApp.Interfaces;
 using InventoryApp.Models;
 using InventoryApp.Services;
+using InventoryApp.Utils;
 using Microsoft.Extensions.Logging;
 using Serilog;
 
@@ -26,114 +27,19 @@ namespace InventoryApp
             });
             Logger = loggerFactory.CreateLogger<Program>();
         }
-        public static void DisplayOptionsList()
-        {
-            Console.WriteLine("""
-                    ==================== Inventory System ======================
 
-                    Please choose one of the following options:
-
-                    1. Create a new product
-                    2. View all products
-                    3. View a single product by ID
-                    4. Update a product
-                    5. Delete a product
-                    6. Exit the application
-
-                    ============================================================
-                    """);
-        }
-        public static Product ReadProductInfo(long id)
-        {
-            
-            Product product = new Product();
-            Console.Write("Product Name : ");
-            product.Name = Console.ReadLine()!;
-            Console.Write("Product Description : ");
-            product.Description = Console.ReadLine()!;
-            Console.Write("Product Price : ");
-            var isValidValue = double.TryParse(Console.ReadLine(), out var price);
-            while (!isValidValue)
-            {
-                Console.WriteLine("please enter numeric value.");
-                isValidValue = double.TryParse(Console.ReadLine(), out price);
-            }
-            product.Price = price;
-
-            double discount;
-            bool IsValidRange;
-            do
-            {
-                IsValidRange = true;
-                Console.Write("Product Discount : ");
-                isValidValue = double.TryParse(Console.ReadLine(), out discount);
-                if (!isValidValue)
-                {
-                    Console.WriteLine("Please enter numeric value.");
-                    continue;
-                }
-                if (discount < 0 || discount > 1)
-                {
-                    Console.WriteLine("Discount value must be between 0.00 and 1.00");
-                    IsValidRange = false;
-                }
-            } while (!isValidValue || !IsValidRange);
-            product.Discount = discount;
-
-            Console.Write("Product Quantity : ");
-            isValidValue = int.TryParse(Console.ReadLine(), out var quantity);
-            while (!isValidValue)
-            {
-                Console.WriteLine("please enter numeric value.");
-                isValidValue = int.TryParse(Console.ReadLine(), out quantity);
-            }
-            product.Quantity = quantity;
-            
-            product.Id = id;
-            product.CreatedAt = DateTime.Now;
-            return product;
-        }
-        public static void PrintProduct(Product product)
-        {
-            Console.WriteLine("========ProductInfo=========");
-            Console.WriteLine(product);
-            Console.WriteLine("============================");
-        }
-        public static void PrintProducts(IList<Product>? products)
-        {
-            if (products is null) return;
-            if(!products.Any())
-            {
-                Console.WriteLine("There are no products.");
-                return;
-            }
-            foreach (var product in products)
-            {
-                PrintProduct(product);
-            }
-            Console.WriteLine($"Total Products : {products.Count}");
-        }
-        public static long GetProductId()
-        {
-            Console.Write("Enter product ID :");
-            var IsValidId = long.TryParse(Console.ReadLine(), out var id);
-            while(!IsValidId)
-            {
-                Console.Write("Invalid ID Format, please enter a Numeric ID:");
-                IsValidId = long.TryParse(Console.ReadLine(),out id);
-            }
-            return id;
-        }
         static void Main(string[] args)
         {
-
-
             Logger.LogInformation("Application started");
 
+            var appMenu = new InventoryAppMenu();
+            var consoleInputHelper = new ConsoleInputHelper();
+            var consoleOutputHelper = new ConsoleOutputHelper();
             var path = Path.Combine(AppContext.BaseDirectory, "Data", "products.json");
             IProductService productService = new ProductService(path);
+
             displayOptionsList:
-            DisplayOptionsList();
+            appMenu.DisplayOptionsList();
             var isNumericinput = int.TryParse(Console.ReadLine(),out var option);
             while(!isNumericinput || option < 1 || option > 6)
             {
@@ -145,7 +51,8 @@ namespace InventoryApp
             {
                 case ConsoleMenuOperation.Create:
                 {
-                    var product = ReadProductInfo(productService.GetNextProductId());
+                    long id = productService.GetNextProductId();
+                    var product = consoleInputHelper.ReadProductInfo(id,3,3);
                     var result = productService.CreateProduct(product);
                     Logger.LogInformation($"Creating new product ID = {product.Id}, Name = {product.Name},..., result = {result.Message}");
                     Console.WriteLine(result.Message);
@@ -172,13 +79,13 @@ namespace InventoryApp
                     else
                     {
                         Logger.LogInformation($"Getting all products, result = printed");
-                        PrintProducts(result.Products);
+                        consoleOutputHelper.PrintProducts(result.Products);
                     }
                     goto displayOptionsList;
                 }
                 case ConsoleMenuOperation.GetOneProductById:
                 {
-                    long id = GetProductId();
+                    long id = consoleInputHelper.ReadProductId();
                     Logger.LogInformation($"Getting product with ID = {id}");
                     var result = productService.GetProductByFilter(p => p.Id == id);
                     if(result.Product is null)
@@ -188,14 +95,14 @@ namespace InventoryApp
                     }
                     else
                     {
-                        PrintProduct(result.Product);
+                        consoleOutputHelper.PrintProduct(result.Product);
                         Logger.LogInformation($"Getting product with ID = {id}, result = printed");
                     }
                         goto displayOptionsList;
                 }
                 case ConsoleMenuOperation.UpdateProduct:
                 {
-                    long id = GetProductId();
+                    long id = consoleInputHelper.ReadProductId();
                     var product = productService.GetProductByFilter(p => p.Id == id).Product;
                     Logger.LogInformation($"Trying to update product with ID = {id}");
                     if (product is null)
@@ -205,7 +112,7 @@ namespace InventoryApp
                     }
                     else
                     {
-                        var result = productService.UpdateProduct(id, ReadProductInfo(id));
+                        var result = productService.UpdateProduct(id, consoleInputHelper.ReadProductInfo(id,3,3));
                         Console.WriteLine(result.Message);
                         Logger.LogInformation($"Update result, product with ID = {id}, Result = {result.Message}");
                         if (result.ValidationResult != null && result.ValidationResult.IsValid == false)
@@ -221,7 +128,7 @@ namespace InventoryApp
                 }
                 case ConsoleMenuOperation.DeleteProduct:
                 {
-                    long id = GetProductId();
+                    long id = consoleInputHelper.ReadProductId();
                     var result = productService.DeleteProduct(id);
                     Console.WriteLine(result.Message);
                     Logger.LogInformation($"deleting product with ID = {id} , Result = {result.Message}");
