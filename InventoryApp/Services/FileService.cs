@@ -1,6 +1,4 @@
 ﻿using InventoryApp.Interfaces;
-using InventoryApp.Models;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Text.Json;
 
@@ -8,41 +6,32 @@ namespace InventoryApp.Services
 {
     internal class FileService<T> : IFileService<T>
     {
-        private readonly Microsoft.Extensions.Logging.ILogger Logger;
         private void CreateDirectory(string path)
         {
-            Logger.LogInformation($"Entering CreateDirectory method");
+            Log.Information($"Entering CreateDirectory method");
 
             var directoryName = Path.GetDirectoryName(path);
             if (directoryName is not null && !Directory.Exists(directoryName))
             {
-                Logger.LogInformation($"ُCreate Direcorty : {directoryName}");
+                Log.Information("Create Direcorty : {directoryName}",directoryName);
                 Directory.CreateDirectory(directoryName);
             }
             else
             {
-                Logger.LogInformation($"Directory already exists or path is null: {directoryName}");
+                Log.Information("Directory already exists or path is null: {directoryName}",directoryName);
             }
 
-            Logger.LogInformation("Exiting CreateDirectory method.");
-        }
-        public FileService()
-        {
-            var loggerFactory = LoggerFactory.Create(config =>
-            {
-                config.AddSerilog();
-            });
-            Logger = loggerFactory.CreateLogger<FileService<T>>();
+            Log.Information("Exiting CreateDirectory method.");
         }
 
         public void WriteToFile(T value, string filePath)
         {
             try
             {
-                Logger.LogInformation($"Writing data to file at {filePath}");
+                Log.Information("Writing data to file at {filePath}",filePath);
                 if (string.IsNullOrWhiteSpace(filePath))
                 {
-                    Logger.LogWarning($"File path ({filePath}) must not be null or empty.");
+                    Log.Warning("File path ({filePath}) must not be null or empty.",filePath);
                     throw new ArgumentException("File path must not be null or empty.", nameof(filePath));
                 }
                 CreateDirectory(filePath);
@@ -54,11 +43,11 @@ namespace InventoryApp.Services
                 fileStream.Position = 0;
                 writer.Write(json);
 
-                Logger.LogInformation("Successfully wrote data to file.");
+                Log.Information("Successfully wrote data to file.");
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"Failed to write data to file at {filePath}");
+                Log.Error(ex, "Failed to write data to file at {filePath}",filePath);
                 throw;
             }
         }
@@ -67,10 +56,10 @@ namespace InventoryApp.Services
         {
             try
             {
-                Logger.LogInformation($"Reading data from file at {filePath}");
+                Log.Information("Reading data from file at {filePath}", filePath);
                 if (string.IsNullOrWhiteSpace(filePath))
                 {
-                    Logger.LogWarning($"File path ({filePath}) must not be null or empty.");
+                    Log.Warning("File path ({filePath}) must not be null or empty.", filePath);
                     throw new ArgumentException("File path must not be null or empty.", nameof(filePath));
                 }
                 using FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -81,7 +70,7 @@ namespace InventoryApp.Services
 
                 if (string.IsNullOrWhiteSpace(content))
                 {
-                    Logger.LogWarning("File is empty. Returning empty data.");
+                    Log.Warning("File is empty. Returning empty data.");
 
                     return Activator.CreateInstance<T>() ?? throw new InvalidOperationException("Failed to create default instance of type.");
                 }
@@ -92,17 +81,17 @@ namespace InventoryApp.Services
                     throw new InvalidDataException("Failed to deserialize data from file: content is not in valid format.");
                 }
 
-                Logger.LogInformation($"Successfully read data from file.");
+                Log.Information($"Successfully read data from file.");
                 return value;
             }
             catch (JsonException ex)
             {
-                Logger.LogError(ex, "File content is not valid JSON.");
+                Log.Error(ex, "File content is not valid JSON.");
                 throw new InvalidDataException("File content is not valid JSON.", ex);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"Failed to read data from file at {filePath}");
+                Log.Error(ex, "Failed to read data from file at {filePath}",filePath);
                 throw;
             }
         }

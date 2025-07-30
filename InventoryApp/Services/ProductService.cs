@@ -2,7 +2,6 @@
 using InventoryApp.Models;
 using InventoryApp.Validators;
 using InventoryApp.Dtos;
-using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace InventoryApp.Services
@@ -11,31 +10,25 @@ namespace InventoryApp.Services
     {
         private readonly IFileService<List<Product>> fileService;
         private readonly ProductValidator validator;
-        private readonly Microsoft.Extensions.Logging.ILogger Logger;
         private readonly string FilePath;
         public ProductService(string path)
         {
             fileService = new FileService<List<Product>>();
             FilePath = path;
             validator = new ProductValidator();
-            var loggerFactory = LoggerFactory.Create(config =>
-            {
-                config.AddSerilog();
-            });
-            Logger = loggerFactory.CreateLogger<Program>();
         }
         public ProductOperationResultDto CreateProduct(Product product)
         {
             try
             {
-                Logger.LogInformation("Attempting to create a new product.");
+                Log.Information("Attempting to create a new product.");
                 var validationResult = validator.Validate(product);
                 if (validationResult.IsValid)
                 {
                     var products = fileService.ReadFromFile(FilePath);
                     products.Add(product);
                     fileService.WriteToFile(products, FilePath);
-                    Logger.LogInformation($"Product with ID {product.Id} created successfully.");
+                    Log.Information("Product with ID {product.Id} created successfully.", product.Id);
                     return new ProductOperationResultDto()
                     {
                         Message = "Product Created Successfully!",
@@ -44,7 +37,7 @@ namespace InventoryApp.Services
                 }
                 else
                 {
-                    Logger.LogWarning($"Validation failed while creating product. Errors: {string.Join(", ", validationResult.Errors.Select(e => $"{e.Field}: {e.Message}"))}");
+                    Log.Warning("Validation failed while creating product. Errors: {Errors}", string.Join(", ", validationResult.Errors.Select(e => $"{e.Field}: {e.Message}")));
                     return new ProductOperationResultDto()
                     {
                         Message = "Fail to create product due to validation errors.",
@@ -56,7 +49,7 @@ namespace InventoryApp.Services
             }
             catch (Exception ex) when (ex is InvalidDataException)
             {
-                Logger.LogError(ex, "InvalidDataException occurred during Create.");
+                Log.Error(ex, "InvalidDataException occurred during Create.");
                 return new ProductOperationResultDto()
                 {
                     Message = "Something went wrong, could be Invalid file format.",
@@ -66,7 +59,7 @@ namespace InventoryApp.Services
 
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Unexpected error occurred during Create.");
+                Log.Error(ex, "Unexpected error occurred during Create.");
                 return new ProductOperationResultDto()
                 {
                     Message = "An unexpected error occurred.",
@@ -77,14 +70,14 @@ namespace InventoryApp.Services
 
         public DeleteResultDto DeleteProduct(long id)
         {
-            Logger.LogInformation($"Attempting to delete product with ID {id}.");
+            Log.Information("Attempting to delete product with ID {id}.",id);
             try
             {
                 var products = fileService.ReadFromFile(FilePath);
                 var product = products.FirstOrDefault(p => p.Id == id);
                 if (product is null)
                 {
-                    Logger.LogWarning($"Delete failed: product with ID {id} not found.");
+                    Log.Warning("Delete failed: product with ID {id} not found.",id);
                     return new DeleteResultDto()
                     {
                         Message = $"Product with ID {id} not found.",
@@ -95,7 +88,7 @@ namespace InventoryApp.Services
                 {
                     products.Remove(product);
                     fileService.WriteToFile(products, FilePath);
-                    Logger.LogInformation($"Product with ID {id} deleted successfully.");
+                    Log.Information("Product with ID {id} deleted successfully.",id);
                     return new DeleteResultDto()
                     {
                         Message = "Product deleted Successfully!",
@@ -106,7 +99,7 @@ namespace InventoryApp.Services
             }
             catch (Exception ex) when (ex is InvalidDataException)
             {
-                Logger.LogError(ex, "InvalidDataException occurred during Delete.");
+                Log.Error(ex, "InvalidDataException occurred during Delete.");
                 return new DeleteResultDto()
                 {
                     Message = "Something went wrong, could be Invalid file format.",
@@ -116,7 +109,7 @@ namespace InventoryApp.Services
 
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Unexpected error occurred during Delete.");
+                Log.Error(ex, "Unexpected error occurred during Delete.");
 
                 return new DeleteResultDto()
                 {
@@ -130,13 +123,13 @@ namespace InventoryApp.Services
         {
             try
             {
-                Logger.LogInformation("Retrieving product by filter }");
+                Log.Information("Retrieving product by filter");
 
                 var products = GetAllProducts(filter).Products;
                 Product? product = products?.FirstOrDefault();
                 if (product is not null)
                 {
-                    Logger.LogInformation($"Retrieving product by filter successed,product id = {product.Id}");
+                    Log.Information("Retrieving product by filter successed,product id = {Id}",product.Id);
 
                     return new GetProductResultDto()
                     {
@@ -145,7 +138,7 @@ namespace InventoryApp.Services
                 }
                 else
                 {
-                    Logger.LogWarning("product not found");
+                    Log.Warning("product not found");
 
                     return new GetProductResultDto()
                     {
@@ -157,7 +150,7 @@ namespace InventoryApp.Services
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Unexpected error occurred during Retrieving product.");
+                Log.Error(ex, "Unexpected error occurred during Retrieving product.");
 
                 return new GetProductResultDto()
                 {
@@ -168,7 +161,7 @@ namespace InventoryApp.Services
 
         public GetProductsResultDto GetAllProducts(Func<Product, bool>? filter)
         {
-            Logger.LogInformation("Retrieving product list...");
+            Log.Information("Retrieving product list...");
             try
             {
                 var products = fileService.ReadFromFile(FilePath);
@@ -176,7 +169,7 @@ namespace InventoryApp.Services
                 {
                     products = products.Where(filter).ToList();
                 }
-                Logger.LogInformation($"Retrieved {products.Count} product(s).");
+                Log.Information("Retrieved {Count} product(s).",products.Count);
                 return new GetProductsResultDto()
                 {
                     Products = products,
@@ -184,7 +177,7 @@ namespace InventoryApp.Services
             }
             catch(Exception ex) when (ex is InvalidDataException)
             {
-                Logger.LogError(ex, "InvalidDataException occurred during Retrieving product list.");
+                Log.Error(ex, "InvalidDataException occurred during Retrieving product list.");
                 return new GetProductsResultDto() { 
                     Products = new List<Product>(),
                     Message = "Something went wrong, could be Invalid file format.",
@@ -194,7 +187,7 @@ namespace InventoryApp.Services
             
             catch(Exception ex )
             {
-                Logger.LogError(ex, "Unexpected error occurred during Retrieving product list.");
+                Log.Error(ex, "Unexpected error occurred during Retrieving product list.");
 
                 return new GetProductsResultDto()
                 {
@@ -208,11 +201,11 @@ namespace InventoryApp.Services
         {
             try
             {
-                Logger.LogInformation($"Attempting to update product with ID {id}.");
+                Log.Information("Attempting to update product with ID {id}.",id);
                 var products = fileService.ReadFromFile(FilePath);
                 var existingProduct = products.FirstOrDefault(p => p.Id == id);
                 if(existingProduct is null) {
-                    Logger.LogWarning($"Update failed: product with ID {id} not found.");
+                    Log.Warning("Update failed: product with ID {id} not found.",id);
                     return new ProductOperationResultDto()
                     {
                         Message = $"Product with ID {id} not found.",
@@ -227,7 +220,7 @@ namespace InventoryApp.Services
                     product.CreatedAt = existingProduct.CreatedAt;
                     products[index] = product;
                     fileService.WriteToFile(products, FilePath);
-                    Logger.LogInformation($"Product with ID {id} updated successfully.");
+                    Log.Information("Product with ID {id} updated successfully.",id);
                     return new ProductOperationResultDto()
                     {
                         Message = "Product updated Successfully!",
@@ -236,7 +229,7 @@ namespace InventoryApp.Services
                 }
                 else
                 {
-                    Logger.LogWarning($"Validation failed while updating product with ID {id}. Errors: {string.Join(", ", validationResult.Errors.Select(e => $"{e.Field}: {e.Message}"))}");
+                    Log.Warning("Validation failed while updating product with ID {id}. Errors: {Errors}",id, string.Join(", ", validationResult.Errors.Select(e => $"{e.Field}: {e.Message}")));
 
                     return new ProductOperationResultDto()
                     {
@@ -248,7 +241,7 @@ namespace InventoryApp.Services
             }
             catch (Exception ex) when (ex is InvalidDataException)
             {
-                Logger.LogError(ex, "InvalidDataException occurred during Update.");
+                Log.Error(ex, "InvalidDataException occurred during Update.");
                 return new ProductOperationResultDto()
                 {
                     Message = "Something went wrong, could be Invalid file format.",
@@ -258,7 +251,7 @@ namespace InventoryApp.Services
 
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Unexpected error occurred during Update.");
+                Log.Error(ex, "Unexpected error occurred during Update.");
                 return new ProductOperationResultDto()
                 {
                     Message = "An unexpected error occurred.",
@@ -270,16 +263,23 @@ namespace InventoryApp.Services
         {
             try
             {
+                Log.Information( "Trying to get next id");
+
                 var products = fileService.ReadFromFile(FilePath);
                 if(products.Count == 0)
                 {
+                    Log.Information("returned id with value {id}",1);
+
                     return 1;
                 }
                 var currentMaxId = products.Max(x => x.Id);
+                Log.Information("returned id with value {id}", currentMaxId+1);
                 return currentMaxId + 1;
             }
-            catch(Exception)
+            catch(Exception ex)
             {
+                Log.Error(ex,"Error occured while trying to get next id, value returend {id}",-1);
+
                 return -1;
             }
         }
